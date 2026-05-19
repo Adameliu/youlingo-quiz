@@ -92,7 +92,8 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI
 <h5>选择模块</h5>
 <p class="small text-muted" id="lang-desc">请先选择上方语言</p>
 <div class="text-center mb-3"><button class="btn btn-primary btn-lg" id="btn-start-study" style="border-radius:30px;padding:10px 40px">开始学习</button>
-<button class="btn btn-outline-danger btn-sm ms-2" id="btn-reset-all" style="border-radius:20px" onclick="resetAll()">重置全部进度</button></div>
+<button class="btn btn-outline-danger btn-sm ms-2" id="btn-reset-all" style="border-radius:20px" onclick="resetAll()">重置全部进度</button>
+<button class="btn btn-success btn-sm ms-2 hide" id="btn-install" style="border-radius:20px" onclick="installApp()">📲 安装到桌面</button></div>
 <div class="grid-3" id="mod-grid"></div>
 <div class="stats" id="gstats"></div>
 </div>
@@ -225,6 +226,30 @@ firebase.auth().onAuthStateChanged(function(user) {
 // Register Service Worker for PWA
 if('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/service-worker.js');
+}
+
+// PWA Install prompt
+var deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', function(e) {
+    e.preventDefault();
+    deferredPrompt = e;
+    var btn = document.getElementById('btn-install');
+    if(btn) btn.classList.remove('hide');
+});
+
+window.addEventListener('appinstalled', function() {
+    deferredPrompt = null;
+    var btn = document.getElementById('btn-install');
+    if(btn) btn.classList.add('hide');
+});
+
+function installApp() {
+    if(!deferredPrompt) return;
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(function(result) {
+        deferredPrompt = null;
+        document.getElementById('btn-install').classList.add('hide');
+    });
 }
 
 function play(au) {
