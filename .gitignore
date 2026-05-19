@@ -1,0 +1,11 @@
+# 音频已上传到 Cloudflare R2，不需要在 Git 仓库中
+audio/
+modules/
+
+# Python 缓存
+__pycache__/
+*.pyc
+
+# 系统文件
+Thumbs.db
+.DS_Store
