@@ -38,10 +38,7 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI
 .sec-item .badge{font-size:.75rem}
 .card-box{background:#fff;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.07);padding:25px;margin-top:15px;min-height:250px}
 .q-text{font-size:1.05rem;line-height:1.7;margin-bottom:15px}
-.q-text .audio-btn{display:inline-block;width:32px;cursor:pointer;vertical-align:middle}
-.opt-btn{font-size:.95rem;padding:10px 18px;border-radius:10px;border:2px solid #dee2e6;background:#fff;cursor:pointer;transition:all .12s;margin:6px;display:inline-block;text-align:left;min-width:120px}
-.opt-btn:hover{border-color:var(--primary);background:#e8f4fd;box-shadow:0 2px 8px rgba(23,162,184,0.12)}
-.opt-btn.sel{border-color:var(--primary);background:#d1ecf1;color:#0c5460;font-weight:600}
+.q-text{font-size:1.05rem;line-height:1.7;margin-bottom:15px}
 .inp{font-size:1.05rem;text-align:center;padding:12px;border-radius:8px;border:2px solid #dee2e6}
 .inp:focus{border-color:var(--primary);box-shadow:0 0 0 .2rem rgba(23,162,184,0.12)}
 .inp.ok{border-color:#28a745;background:#f0fff4}
@@ -114,7 +111,6 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI
 <button class="btn btn-sm btn-outline-secondary" id="back-sec">← 返回</button>
 <span class="ms-2 fw-bold small" id="study-sec-name"></span>
 </div>
-<span id="card-num" class="small text-muted"></span>
 </div>
 <div class="pbar"><div class="fill" id="spfill"></div></div>
 <div class="card-box" id="card-box">
@@ -164,6 +160,7 @@ firebase.initializeApp(firebaseConfig);
 var db = firebase.database();
 var SYNC_KEY = "progress_v2";
 var R2_BASE = "https://pub-1c1a3bd3f4554dc4afce6c91070cf22e.r2.dev";
+var TYPE_ORDER = ["dictation","dictationChinese","meaningChinese","word","multi","gender","plural","feminine","pastParticiple","isSeparable","presentTenseConjugation","pastTenseConjugation","konjunktivII","imperativ","comparativ","superlativ","phrase","custom","array","一般"];
 
 function saveProg() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(prog));
@@ -246,7 +243,7 @@ window.addEventListener('appinstalled', function() {
 function installApp() {
     if(!deferredPrompt) return;
     deferredPrompt.prompt();
-    deferredPrompt.userChoice.then(function(result) {
+    deferredPrompt.userChoice.then(function() {
         deferredPrompt = null;
         document.getElementById('btn-install').classList.add('hide');
     });
@@ -331,7 +328,6 @@ function startStudy(mi, si) {
         var p = prog[c.i];
         if(!p || !p.m) available.push(c);
     }
-    var typeOrder = ["dictation","dictationChinese","meaningChinese","word","multi","gender","plural","feminine","pastParticiple","isSeparable","presentTenseConjugation","pastTenseConjugation","konjunktivII","imperativ","comparativ","superlativ","phrase","custom","array","一般"];
     var groups = {};
     for(var ci=0; ci<available.length; ci++) {
         var c = available[ci];
@@ -340,8 +336,8 @@ function startStudy(mi, si) {
         groups[t].push(c);
     }
     cards = [];
-    for(var ti=0; ti<typeOrder.length; ti++) {
-        var t = typeOrder[ti];
+    for(var ti=0; ti<TYPE_ORDER.length; ti++) {
+        var t = TYPE_ORDER[ti];
         if(groups[t]) {
             var g = groups[t].slice();
             for(var i=g.length-1; i>0; i--) {
@@ -362,7 +358,6 @@ function showCard() {
     curCard = cards[cardIdx];
     document.getElementById("ctype").textContent = curCard.t || "一般";
     document.getElementById("ptext").textContent = (cardIdx+1)+"/"+cards.length;
-    document.getElementById("card-num").textContent = (cardIdx+1)+"/"+cards.length;
     document.getElementById("spfill").style.width = (cardIdx/cards.length*100)+"%";
     renderQ(curCard.q || "");
     
@@ -371,7 +366,6 @@ function showCard() {
     if(curCard.fields && curCard.fields.length > 1) {
         mfArea.style.display = "";
         document.getElementById("ans-inp").style.display = "none";
-        curCard._fieldValues = [];
         for(var fi=0; fi<curCard.fields.length; fi++) {
             (function(f, idx) {
                 var row = document.createElement("div");
@@ -480,7 +474,6 @@ function submitAns() {
     if(isMulti) {
         // Multi-field: check all fields
         var allCorrect = true;
-        var totalFb = "";
         for(var fi=0; fi<curCard.fields.length; fi++) {
             var fi_inp = document.getElementById("mf-"+fi);
             var fi_fb = document.getElementById("mf-fb-"+fi);
@@ -495,7 +488,6 @@ function submitAns() {
                 fi_fb.textContent = fieldCorrect ? "\u2713" : (fa ? fa : "");
                 fi_fb.style.color = fieldCorrect ? "#28a745" : "#dc3545";
             }
-            totalFb += (curCard.fields[fi].l + ": " + ua + " -> " + fa + "\n");
         }
         correct = allCorrect;
         if(!correct) fb.innerHTML = "\u2717 \u90e8\u5206\u9519\u8bef\uff0c\u7ea2\u8272\u4e3a\u6b63\u786e\u7b54\u6848";
@@ -578,7 +570,7 @@ function startStudyAll() {
     // Collect review cards from ALL earlier sections + current section
     var reviewCards = [];
     var newCards = [];
-    var typeOrder = ["dictation","dictationChinese","meaningChinese","word","multi","gender","plural","feminine","pastParticiple","isSeparable","presentTenseConjugation","pastTenseConjugation","konjunktivII","imperativ","comparativ","superlativ","phrase","custom","array","\u4e00\u822c"];
+    var typeOrder = TYPE_ORDER;
     
     for(var mi=0; mi<=curMi; mi++) {
         var maxSi = (mi === curMi) ? curSi : langData[mi].sections.length - 1;
@@ -665,7 +657,6 @@ var langFiles = {"german": "study_data_compact.json", "english": "english_data.j
 var langInfo = {"german": {"name": "Deutsch", "flag": "🇩🇪"}, "english": {"name": "English", "flag": "🇬🇧"}};
 
 function switchLang(lang) {
-    currentLang = lang;
     document.getElementById("btn-lang-de").className = lang==="german" ? "btn btn-lg btn-primary" : "btn btn-lg btn-outline-secondary";
     document.getElementById("btn-lang-en").className = lang==="english" ? "btn btn-lg btn-primary" : "btn btn-lg btn-outline-secondary";
     var info = langInfo[lang];
