@@ -277,7 +277,7 @@ function preloadAudio(au) {
 function norm(s) { return s.replace(/\s+/g," ").trim(); }
 
 function stripPunct(s) {
-    return s.replace(/[.,!?\u3002\uFF0C\u3001\uFF01\uFF1F\u002E]+$/g, "");
+    return s.replace(/[.,!?\u3002\uFF0C\u3001\uFF01\uFF1F\u002E\u002C-]+/g, " ").replace(/\s+/g, " ").trim();
 }
 
 function checkAns(ua, ca) {
