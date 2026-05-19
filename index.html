@@ -639,7 +639,9 @@ function startStudyAll() {
 function resetAll() {
     if(!confirm("\u786e\u5b9a\u8981\u91cd\u7f6e\u5168\u90e8\u8fdb\u5ea6\u5417\uff1f")) return;
     localStorage.removeItem("sharplingo_progress_v2");
-    prog = {}; renderMods();
+    prog = {};
+    saveProg();
+    renderMods();
 }
 
 function resetModule() {
