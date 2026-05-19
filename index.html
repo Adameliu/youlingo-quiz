@@ -1,0 +1,754 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Youlingo友邻国</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<style>
+:root{--primary:#17a2b8;--bg:#f4f6f9}
+body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.container{max-width:720px;margin:0 auto;padding:15px}
+.navbar{background:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+.grid-3{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.mod-card{background:#fff;border-radius:12px;padding:14px;text-align:center;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,0.05);border:2px solid transparent;transition:all .15s}
+.mod-card:hover{border-color:var(--primary)}
+.mod-card.done{opacity:.65}
+.mod-card.done .name::after{content:" ✓";color:#28a745}
+.mod-card .name{font-weight:600;font-size:.9rem}
+.mod-card .count{font-size:.75rem;color:#888;margin-top:2px}
+.mod-card .bar{height:3px;background:#e9ecef;border-radius:2px;margin-top:6px;overflow:hidden}
+.mod-card .bar .fill{height:100%;background:var(--primary);border-radius:2px;transition:width .3s}
+.sec-list{margin-top:12px}
+.sec-item{background:#fff;border-radius:10px;padding:12px 16px;margin-bottom:6px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;box-shadow:0 1px 4px rgba(0,0,0,0.04);transition:transform .1s}
+.sec-item:hover{transform:translateX(4px)}
+.sec-item.done{opacity:.6}
+.sec-item .sn{font-size:.9rem;font-weight:500}
+.sec-item .sm{font-size:.75rem;color:#888}
+.sec-item .sb{height:2px;background:#e9ecef;border-radius:2px;margin-top:4px;width:70px;overflow:hidden}
+.sec-item .sb .fill{height:100%;background:var(--primary)}
+.sec-item .badge{font-size:.75rem}
+.card-box{background:#fff;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.07);padding:25px;margin-top:15px;min-height:250px}
+.q-text{font-size:1.05rem;line-height:1.7;margin-bottom:15px}
+.q-text .audio-btn{display:inline-block;width:32px;cursor:pointer;vertical-align:middle}
+.opt-btn{font-size:.95rem;padding:10px 18px;border-radius:10px;border:2px solid #dee2e6;background:#fff;cursor:pointer;transition:all .12s;margin:6px;display:inline-block;text-align:left;min-width:120px}
+.opt-btn:hover{border-color:var(--primary);background:#e8f4fd;box-shadow:0 2px 8px rgba(23,162,184,0.12)}
+.opt-btn.sel{border-color:var(--primary);background:#d1ecf1;color:#0c5460;font-weight:600}
+.inp{font-size:1.05rem;text-align:center;padding:12px;border-radius:8px;border:2px solid #dee2e6}
+.inp:focus{border-color:var(--primary);box-shadow:0 0 0 .2rem rgba(23,162,184,0.12)}
+.inp.ok{border-color:#28a745;background:#f0fff4}
+.inp.no{border-color:#dc3545;background:#fff5f5}
+.fb{padding:12px;border-radius:8px;margin-top:10px;font-size:.9rem}
+.fb.ok{background:#d4edda;color:#155724;border:1px solid #c3e6cb}
+.fb.no{background:#f8d7da;color:#721c24;border:1px solid #f5c6cb}
+.pbar{height:5px;background:#e9ecef;border-radius:3px;overflow:hidden;margin-bottom:10px}
+.pbar .fill{height:100%;background:linear-gradient(90deg,var(--primary),#20c997);border-radius:3px;transition:width .3s}
+.pinfo{display:flex;justify-content:space-between;font-size:.8rem;color:#888;margin-bottom:8px}
+.acts{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.acts .btn{font-size:.85rem}
+.hooray{text-align:center;padding:40px 20px}
+.hooray i{font-size:3rem;color:#28a745}
+.stats{display:flex;gap:10px;margin-top:15px;flex-wrap:wrap}
+.stat{background:#fff;border-radius:10px;padding:12px;flex:1;min-width:90px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,0.05)}
+.stat .n{font-size:1.4rem;font-weight:700;color:var(--primary)}
+.stat .l{font-size:.7rem;color:#888}
+.hide{display:none!important}
+.tbadge{display:inline-block;background:#e8f4fd;color:#0c5460;padding:2px 10px;border-radius:10px;font-size:.75rem}
+@media(max-width:600px){.grid-3{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}.card-box{padding:18px 14px}}
+</style>
+</head>
+<body>
+<nav class="navbar">
+<div class="container d-flex justify-content-between align-items-center">
+<span class="fw-bold" style="color:var(--primary);cursor:pointer" onclick="goHome()">Youlingo友邻国</span>
+<span id="today-cnt" class="small text-muted">今日: 0</span>
+</div>
+</nav>
+<div class="container" id="app">
+
+<div id="scr-modules">
+<div class="text-center mb-3"><button class="btn btn-lg btn-primary" id="btn-lang-de" style="border-radius:30px;padding:8px 30px;margin:4px;min-width:140px" onclick="switchLang('german')">🇩🇪 德语</button><button class="btn btn-lg btn-outline-secondary" id="btn-lang-en" style="border-radius:30px;padding:8px 30px;margin:4px;min-width:140px" onclick="switchLang('english')">🇬🇧 英语</button></div>
+<h5>选择模块</h5>
+<p class="small text-muted" id="lang-desc">请先选择上方语言</p>
+<div class="text-center mb-3"><button class="btn btn-primary btn-lg" id="btn-start-study" style="border-radius:30px;padding:10px 40px">开始学习</button>
+<button class="btn btn-outline-danger btn-sm ms-2" id="btn-reset-all" style="border-radius:20px" onclick="resetAll()">重置全部进度</button></div>
+<div class="grid-3" id="mod-grid"></div>
+<div class="stats" id="gstats"></div>
+</div>
+
+<div id="scr-sections" class="hide">
+<div class="d-flex align-items-center mb-2">
+<button class="btn btn-sm btn-outline-secondary" id="back-mod2">← 返回</button>
+<span class="ms-2 fw-bold" id="sec-mod-name"></span>
+</div>
+<div class="pbar"><div class="fill" id="mod-pfill"></div></div>
+<div class="d-flex justify-content-between align-items-center mb-1"><p class="small text-muted mb-0">选择小节开始学习</p><button class="btn btn-outline-danger btn-sm" id="btn-reset-mod" style="border-radius:15px" onclick="resetModule()">重置本模块</button></div>
+<div class="sec-list" id="sec-list"></div>
+</div>
+
+<div id="scr-study" class="hide">
+<div class="d-flex justify-content-between align-items-center mb-1">
+<div>
+<button class="btn btn-sm btn-outline-secondary" id="back-sec">← 返回</button>
+<span class="ms-2 fw-bold small" id="study-sec-name"></span>
+</div>
+<span id="card-num" class="small text-muted"></span>
+</div>
+<div class="pbar"><div class="fill" id="spfill"></div></div>
+<div class="card-box" id="card-box">
+<div class="pinfo"><span id="ptext"></span><span id="ctype" class="tbadge"></span></div>
+<div class="q-text" id="qarea"></div>
+<div id="multi-fields-area" class="mb-3"></div>
+<div id="opts-area" class="text-center mb-3"></div>
+<div class="mb-2"><input type="text" class="form-control inp" id="ans-inp" placeholder="填写答案" autocomplete="off"></div>
+<div class="fb hide" id="fb"></div>
+<div class="acts">
+<button class="btn btn-primary" id="btn-submit">提交</button>
+<button class="btn btn-sm btn-secondary hide" id="btn-show">显示答案</button>
+<button class="btn btn-sm btn-success hide" id="btn-next">下一题</button>
+<button class="btn btn-sm btn-warning hide" id="btn-easy">太简单了</button>
+<button class="btn btn-sm btn-info hide" id="btn-42">42天后</button>
+</div>
+<div class="hooray hide" id="hooray">
+<i class="far fa-check-circle"></i>
+<h5 class="mt-2">本节已完成！</h5>
+<button class="btn btn-primary mt-2" id="btn-done">返回小节</button>
+<button class="btn btn-success mt-2 ms-2" id="btn-next-sec">下一节 →</button>
+</div>
+</div>
+</div>
+
+</div>
+<script>
+const STORAGE_KEY = "sharplingo_progress_v2";
+
+var curModIdx = -1, curSecIdx = -1;
+var cards = [], cardIdx = 0, curCard = null;
+var sessStats = {ok:0, no:0, tot:0};
+var prog = {};
+var _audio = null;
+
+// Firebase
+var firebaseConfig = {
+    apiKey: "AIzaSyAt62RyhvA6jOPxQKNfILis88f2N-KIAZ4",
+    authDomain: "youlingo-quiz.firebaseapp.com",
+    databaseURL: "https://youlingo-quiz-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "youlingo-quiz",
+    storageBucket: "youlingo-quiz.firebasestorage.app",
+    messagingSenderId: "643293722511",
+    appId: "1:643293722511:web:acf898422182e81c347dfa"
+};
+firebase.initializeApp(firebaseConfig);
+var db = firebase.database();
+var SYNC_KEY = "progress_v2";
+var R2_BASE = "https://pub-1c1a3bd3f4554dc4afce6c91070cf22e.r2.dev";
+
+function saveProg() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(prog));
+    db.ref(SYNC_KEY).set(prog);
+}
+
+function loadProg() {
+    try { var p = localStorage.getItem(STORAGE_KEY); if(p) prog = JSON.parse(p); } catch(e) {}
+    db.ref(SYNC_KEY).once("value").then(function(snapshot) {
+        var d = snapshot.val();
+        if(d && Object.keys(d).length > Object.keys(prog).length) {
+            prog = d;
+            saveProg();
+        }
+        renderMods();
+    }).catch(function(){});
+    // Listen for realtime changes
+    db.ref(SYNC_KEY).on("value", function(snapshot) {
+        var d = snapshot.val();
+        if(d && JSON.stringify(d) !== JSON.stringify(prog)) {
+            prog = d;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(prog));
+            renderMods();
+        }
+    });
+}
+
+loadProg();
+
+function play(au) {
+    if(!au) return;
+    try {
+        if(!_audio) _audio = new Audio();
+        _audio.pause();
+        _audio.currentTime = 0;
+        var fn = au.split("/").pop();
+        _audio.src = R2_BASE + "/" + fn;
+        _audio.play()["catch"](function(){});
+    } catch(e){}
+}
+
+function preloadAudio(au) {
+    if(!au) return;
+    try {
+        var dummy = new Audio();
+        dummy.preload = "auto";
+        var fn = au.split("/").pop();
+        dummy.src = R2_BASE + "/" + fn;
+        dummy.load();
+    } catch(e){}
+}
+
+
+
+function norm(s) { return s.replace(/\s+/g," ").trim(); }
+
+function stripPunct(s) {
+    return s.replace(/[.,!?\u3002\uFF0C\u3001\uFF01\uFF1F\u002E]+$/g, "");
+}
+
+function checkAns(ua, ca) {
+    if(!ua || !ca) return false;
+    var u = norm(ua);
+    var up = stripPunct(u);
+    var alts = ca.split("\u6216").map(function(s){ return norm(s); }).filter(Boolean);
+    for(var i=0; i<alts.length; i++) {
+        var a = norm(alts[i]);
+        var ap = stripPunct(a);
+        if(/[A-Z\u00c4\u00d6\u00dc]/.test(a)) {
+            if(u === a || up === ap) return true;
+        } else {
+            var ul = u.toLowerCase();
+            var al = a.toLowerCase();
+            if(ul === al || stripPunct(ul) === stripPunct(al)) return true;
+        }
+    }
+    if(ca.indexOf("\u6216") === -1 && ca.indexOf(",") >= 0) {
+        var ca2 = ca.split(",").map(function(s){ return norm(s); }).filter(Boolean);
+        for(var i=0; i<ca2.length; i++) {
+            var a = norm(ca2[i]);
+            var ap = stripPunct(a);
+            if(/[A-Z\u00c4\u00d6\u00dc]/.test(a)) {
+                if(u === a || up === ap) return true;
+            } else {
+                var ul = u.toLowerCase();
+                var al = a.toLowerCase();
+                if(ul === al || stripPunct(ul) === stripPunct(al)) return true;
+            }
+        }
+    }
+    return false;
+}
+
+
+// ===== Study =====
+function startStudy(mi, si) {
+    curModIdx = mi;
+    curSecIdx = si;
+    var sec = langData[mi].sections[si];
+    document.getElementById("scr-sections").classList.add("hide");
+    document.getElementById("scr-study").classList.remove("hide");
+    document.getElementById("study-sec-name").textContent = sec.name.substring(0,45);
+    var available = [];
+    for(var ci=0; ci<sec.cards.length; ci++) {
+        var c = sec.cards[ci];
+        var p = prog[c.i];
+        if(!p || !p.m) available.push(c);
+    }
+    var typeOrder = ["dictation","dictationChinese","meaningChinese","word","multi","gender","plural","feminine","pastParticiple","isSeparable","presentTenseConjugation","pastTenseConjugation","konjunktivII","imperativ","comparativ","superlativ","phrase","custom","array","一般"];
+    var groups = {};
+    for(var ci=0; ci<available.length; ci++) {
+        var c = available[ci];
+        var t = c.t || "一般";
+        if(!groups[t]) groups[t] = [];
+        groups[t].push(c);
+    }
+    cards = [];
+    for(var ti=0; ti<typeOrder.length; ti++) {
+        var t = typeOrder[ti];
+        if(groups[t]) {
+            var g = groups[t].slice();
+            for(var i=g.length-1; i>0; i--) {
+                var j = Math.floor(Math.random()*(i+1));
+                var tmp = g[i]; g[i] = g[j]; g[j] = tmp;
+            }
+            for(var i=0; i<g.length; i++) cards.push(g[i]);
+        }
+    }
+    cardIdx = 0;
+    sessStats = {ok:0,no:0,tot:0};
+    showCard();
+}
+
+function showCard() {
+    while(cardIdx < cards.length && prog[cards[cardIdx].i] && (prog[cards[cardIdx].i].m || prog[cards[cardIdx].i].done)) cardIdx++;
+    if(cardIdx >= cards.length) { showHooray(); return; }
+    curCard = cards[cardIdx];
+    document.getElementById("ctype").textContent = curCard.t || "一般";
+    document.getElementById("ptext").textContent = (cardIdx+1)+"/"+cards.length;
+    document.getElementById("card-num").textContent = (cardIdx+1)+"/"+cards.length;
+    document.getElementById("spfill").style.width = (cardIdx/cards.length*100)+"%";
+    renderQ(curCard.q || "");
+    
+        // Multi-field area - for conjugation tables etc.
+    var mfArea = document.getElementById("multi-fields-area"); mfArea.innerHTML = "";
+    if(curCard.fields && curCard.fields.length > 1) {
+        mfArea.style.display = "";
+        document.getElementById("ans-inp").style.display = "none";
+        curCard._fieldValues = [];
+        for(var fi=0; fi<curCard.fields.length; fi++) {
+            (function(f, idx) {
+                var row = document.createElement("div");
+                row.style.cssText = "margin:6px 0;display:flex;align-items:center;gap:8px";
+                var lbl = document.createElement("span");
+                lbl.style.cssText = "min-width:80px;font-size:.9rem;font-weight:500";
+                lbl.textContent = f.l;
+                var inp = document.createElement("input");
+                inp.type = "text";
+                inp.className = "form-control inp";
+                inp.style.cssText = "flex:1;text-align:center;padding:8px;border-radius:6px;border:2px solid #dee2e6";
+                inp.id = "mf-"+idx;
+                inp.autocomplete = "off";
+                var fb = document.createElement("div");
+                fb.style.cssText = "font-size:.8rem;min-width:80px;text-align:center";
+                fb.id = "mf-fb-"+idx;
+                row.appendChild(lbl); row.appendChild(inp); row.appendChild(fb);
+                mfArea.appendChild(row);
+            })(curCard.fields[fi], fi);
+        }
+        if(curCard.fields[0]) document.getElementById("mf-0").focus();
+    } else {
+        mfArea.style.display = "none";
+    }
+
+    // Options area - radio buttons for choice cards
+    var oa = document.getElementById("opts-area"); oa.innerHTML = "";
+    var inp = document.getElementById("ans-inp");
+    if(curCard.opts && curCard.opts.length) {
+        oa.classList.remove("hide");
+        inp.style.display = "none";
+        for(var oi=0; oi<curCard.opts.length; oi++) {
+            (function(opt) {
+                var div = document.createElement("div");
+                div.style.cssText = "margin:6px 0;padding:10px 14px;border-radius:8px;border:1px solid #dee2e6;cursor:pointer;display:flex;align-items:center;transition:all .12s";
+                div.onmouseover = function(){ if(!this.classList.contains("sel")){ this.style.borderColor="#17a2b8"; this.style.background="#f0f8ff"; } };
+                div.onmouseout = function(){ if(!this.classList.contains("sel")){ this.style.borderColor="#dee2e6"; this.style.background="#fff"; } };
+                var radio = document.createElement("input");
+                radio.type = "radio"; radio.name = "choice";
+                radio.style.cssText = "width:18px;height:18px;margin-right:12px;cursor:pointer;accent-color:#17a2b8;flex-shrink:0";
+                var label = document.createElement("span");
+                label.style.cssText = "font-size:.95rem;cursor:pointer;flex:1";
+                label.innerHTML = opt;
+                div.appendChild(radio); div.appendChild(label);
+                div.onclick = function() {
+                    document.querySelectorAll("#opts-area > div").forEach(function(d){
+                        d.classList.remove("sel"); d.style.borderColor="#dee2e6"; d.style.background="#fff";
+                    });
+                    this.classList.add("sel");
+                    this.style.borderColor="#17a2b8"; this.style.background="#d1ecf1";
+                    this.querySelector("input[type=radio]").checked = true;
+                    var txt = document.createElement("div");
+                    txt.innerHTML = this.querySelector("span").innerHTML;
+                    inp.value = txt.textContent.trim();
+                };
+                oa.appendChild(div);
+            })(curCard.opts[oi]);
+        }
+    } else {
+        oa.classList.add("hide");
+        // Only show ans-inp if not in multi-field mode
+        if(!curCard.fields || curCard.fields.length <= 1) {
+            inp.style.display = "";
+            inp.value = ""; inp.className = "form-control inp"; inp.disabled = false; inp.focus();
+        }
+    }
+
+    document.getElementById("fb").className = "fb hide";
+    document.getElementById("btn-submit").classList.remove("hide");
+    document.getElementById("btn-show").classList.add("hide");
+    document.getElementById("btn-next").classList.add("hide");
+    document.getElementById("btn-easy").classList.add("hide");
+    document.getElementById("btn-42").classList.add("hide");
+    document.getElementById("hooray").classList.add("hide");
+    
+    if(curCard.au) {
+        play(curCard.au);
+        // Preload next card for instant playback
+        if(cardIdx + 1 < cards.length && cards[cardIdx + 1].au) {
+            preloadAudio(cards[cardIdx + 1].au);
+        }
+    }
+}
+
+function showHooray() {
+    document.getElementById("qarea").innerHTML = "";
+    document.getElementById("multi-fields-area").style.display = "none";
+    document.getElementById("opts-area").classList.add("hide");
+    document.getElementById("ans-inp").classList.add("hide");
+    document.getElementById("btn-submit").classList.add("hide");
+    ["btn-show","btn-next","btn-easy","btn-42"].forEach(function(id){ document.getElementById(id).classList.add("hide"); });
+    document.getElementById("fb").classList.add("hide");
+    document.getElementById("hooray").classList.remove("hide");
+    document.getElementById("ptext").textContent = "全部完成！";
+    document.getElementById("spfill").style.width = "100%";
+}
+
+function submitAns() {
+    if(!curCard) return;
+    var isMulti = curCard.fields && curCard.fields.length > 1;
+    var inp = document.getElementById("ans-inp"), fb = document.getElementById("fb");
+    
+    if(prog[curCard.i] && prog[curCard.i].done) return;
+    
+    var correct = false;
+    if(isMulti) {
+        // Multi-field: check all fields
+        var allCorrect = true;
+        var totalFb = "";
+        for(var fi=0; fi<curCard.fields.length; fi++) {
+            var fi_inp = document.getElementById("mf-"+fi);
+            var fi_fb = document.getElementById("mf-fb-"+fi);
+            if(!fi_inp) continue;
+            var ua = fi_inp.value.trim();
+            var fa = curCard.fa && curCard.fa[fi] ? curCard.fa[fi] : "";
+            var fieldCorrect = fa ? checkAns(ua, fa) : true;
+            if(!fieldCorrect) allCorrect = false;
+            fi_inp.className = "form-control inp";
+            fi_inp.style.borderColor = fieldCorrect ? "#28a745" : "#dc3545";
+            if(fi_fb) {
+                fi_fb.textContent = fieldCorrect ? "\u2713" : (fa ? fa : "");
+                fi_fb.style.color = fieldCorrect ? "#28a745" : "#dc3545";
+            }
+            totalFb += (curCard.fields[fi].l + ": " + ua + " -> " + fa + "\n");
+        }
+        correct = allCorrect;
+        if(!correct) fb.innerHTML = "\u2717 \u90e8\u5206\u9519\u8bef\uff0c\u7ea2\u8272\u4e3a\u6b63\u786e\u7b54\u6848";
+        else fb.innerHTML = "\u2713 \u5168\u5bf9\uff01";
+        fb.className = "fb " + (correct?"ok":"no");
+        fb.style.whiteSpace = "pre-line";
+    } else {
+        var ua = inp.value.trim();
+        correct = checkAns(ua, curCard.a);
+        fb.className = "fb " + (correct?"ok":"no");
+        fb.innerHTML = correct ? "\u2713 \u7b54\u5bf9\u4e86\uff01\u6b63\u786e\u7b54\u6848\uff1a"+curCard.a : "\u2717 \u6b63\u786e\u7b54\u6848\uff1a"+curCard.a;
+        inp.className = "form-control inp " + (correct?"ok":"no");
+    }
+    
+    if(correct) sessStats.ok++; else sessStats.no++;
+    sessStats.tot++;
+    
+    if(correct) {
+        if(!isMulti) inp.disabled = true;
+        document.getElementById("btn-submit").classList.add("hide");
+        document.getElementById("btn-show").classList.add("hide");
+        document.getElementById("btn-next").classList.remove("hide");
+        document.getElementById("btn-easy").classList.remove("hide");
+        document.getElementById("btn-42").classList.remove("hide");
+        var p = prog[curCard.i] || {};
+        p.r = (p.r||0) + 1;
+        p.i = p.r===1 ? 1 : p.r===2 ? 3 : Math.round((p.i||0) * (p.e||2.5));
+        p.e = Math.max(1.3, (p.e||2.5) + 0.1);
+        p.n = Date.now() + (p.i>0 ? p.i*86400000 : 60000);
+        p.done = true; p.m = true;
+        prog[curCard.i] = p;
+    } else {
+        if(!isMulti) { inp.disabled = false; inp.focus(); }
+        document.getElementById("btn-submit").classList.remove("hide");
+        document.getElementById("btn-show").classList.remove("hide");
+        document.getElementById("btn-next").classList.remove("hide");
+        document.getElementById("btn-easy").classList.remove("hide");
+        document.getElementById("btn-42").classList.remove("hide");
+        var p = prog[curCard.i] || {};
+        p.r = 0; p.i = 0; p.e = Math.max(1.3, (p.e||2.5) - 0.2);
+        p.n = Date.now() + 60000;
+        prog[curCard.i] = p;
+    }
+    saveProg();
+    document.getElementById("today-cnt").textContent = "\u4eca\u65e5: "+sessStats.tot;
+}
+function nextCard() { cardIdx++; showCard(); }
+
+function markEasy() {
+    if(!curCard) return;
+    prog[curCard.i] = {m:true, i:90, n:Date.now()+90*86400000};
+    saveProg(); cardIdx++; showCard();
+}
+
+function mark42() {
+    if(!curCard) return;
+    var p = prog[curCard.i] || {};
+    p.i = 42; p.n = Date.now()+42*86400000; p.p42 = true;
+    prog[curCard.i] = p;
+    saveProg(); cardIdx++; showCard();
+}
+
+function startStudyAll() {
+    // Find current learning position: first module+section with un-mastered cards
+    var now = Date.now();
+    var curMi = -1, curSi = -1;
+    for(var mi=0; mi<langData.length; mi++) {
+        for(var si=0; si<langData[mi].sections.length; si++) {
+            var sec = langData[mi].sections[si];
+            for(var ci=0; ci<sec.cards.length; ci++) {
+                var p = prog[sec.cards[ci].i];
+                if(!p || !p.m) { curMi = mi; curSi = si; break; }
+            }
+            if(curMi >= 0) break;
+        }
+        if(curMi >= 0) break;
+    }
+    if(curMi < 0) { alert("\u5168\u90e8\u5b66\u4e60\u5b8c\u6210\uff01"); return; }
+    
+    // Collect review cards from ALL earlier sections + current section
+    var reviewCards = [];
+    var newCards = [];
+    var typeOrder = ["dictation","dictationChinese","meaningChinese","word","multi","gender","plural","feminine","pastParticiple","isSeparable","presentTenseConjugation","pastTenseConjugation","konjunktivII","imperativ","comparativ","superlativ","phrase","custom","array","\u4e00\u822c"];
+    
+    for(var mi=0; mi<=curMi; mi++) {
+        var maxSi = (mi === curMi) ? curSi : langData[mi].sections.length - 1;
+        for(var si=0; si<=maxSi; si++) {
+            var sec = langData[mi].sections[si];
+            for(var ci=0; ci<sec.cards.length; ci++) {
+                var c = sec.cards[ci];
+                var p = prog[c.i];
+                if(p && p.m) continue;
+                if(p && p.n && p.n < now) {
+                    reviewCards.push({card:c, modIdx:mi, secIdx:si});
+                } else if(!p || (!p.r && !p.m)) {
+                    newCards.push({card:c, modIdx:mi, secIdx:si});
+                }
+            }
+        }
+    }
+    
+    if(reviewCards.length === 0 && newCards.length === 0) {
+        alert("\u8be5\u8282\u5df2\u5168\u90e8\u5b66\u4e60\u5b8c\u6210\uff0c\u8bf7\u8fdb\u5165\u4e0b\u4e00\u8282\uff01");
+        return;
+    }
+    
+    function sortCards(arr) {
+        var groups = {};
+        for(var i=0; i<arr.length; i++) {
+            var t = arr[i].card.t || "\u4e00\u822c";
+            if(!groups[t]) groups[t] = [];
+            groups[t].push(arr[i]);
+        }
+        var result = [];
+        for(var ti=0; ti<typeOrder.length; ti++) {
+            var t = typeOrder[ti];
+            if(groups[t]) {
+                var g = groups[t].slice();
+                for(var i=g.length-1; i>0; i--) { var j=Math.floor(Math.random()*(i+1)); var tmp=g[i]; g[i]=g[j]; g[j]=tmp; }
+                for(var i=0; i<g.length; i++) result.push(g[i]);
+            }
+        }
+        return result;
+    }
+    
+    var allCards = sortCards(reviewCards).concat(sortCards(newCards));
+    
+    curModIdx = curMi;
+    curSecIdx = curSi;
+    cards = allCards.map(function(x){ return x.card; });
+    cardIdx = 0;
+    sessStats = {ok:0, no:0, tot:0};
+    
+    document.getElementById("scr-modules").classList.add("hide");
+    document.getElementById("scr-sections").classList.add("hide");
+    document.getElementById("scr-study").classList.remove("hide");
+    document.getElementById("study-sec-name").textContent = "\u667A\u80FD\u5b66\u4e60 - " + langData[curMi].name;
+    showCard();
+}
+
+function resetAll() {
+    if(!confirm("\u786e\u5b9a\u8981\u91cd\u7f6e\u5168\u90e8\u8fdb\u5ea6\u5417\uff1f")) return;
+    localStorage.removeItem("sharplingo_progress_v2");
+    prog = {}; renderMods();
+}
+
+function resetModule() {
+    if(!confirm("\u786e\u5b9a\u8981\u91cd\u7f6e\u5f53\u524d\u6a21\u5757\u7684\u8fdb\u5ea6\u5417\uff1f")) return;
+    var modName = document.getElementById("sec-mod-name").textContent;
+    for(var mi=0; mi<langData.length; mi++) {
+        if(langData[mi].name === modName) {
+            for(var si=0; si<langData[mi].sections.length; si++)
+                for(var ci=0; ci<langData[mi].sections[si].cards.length; ci++)
+                    delete prog[langData[mi].sections[si].cards[ci].i];
+            break;
+        }
+    }
+    saveProg();
+    showSecs(curModIdx);
+}
+
+
+var langData = [];
+var langFiles = {"german": "study_data_compact.json", "english": "english_data.json"};
+var langInfo = {"german": {"name": "Deutsch", "flag": "🇩🇪"}, "english": {"name": "English", "flag": "🇬🇧"}};
+
+function switchLang(lang) {
+    currentLang = lang;
+    document.getElementById("btn-lang-de").className = lang==="german" ? "btn btn-lg btn-primary" : "btn btn-lg btn-outline-secondary";
+    document.getElementById("btn-lang-en").className = lang==="english" ? "btn btn-lg btn-primary" : "btn btn-lg btn-outline-secondary";
+    var info = langInfo[lang];
+    document.getElementById("lang-desc").textContent = info.flag + " " + info.name + " 加载中...";
+    document.getElementById("mod-grid").innerHTML = "<div class='text-center mt-3'><div class='spinner-border text-primary'></div></div>";
+    fetch(langFiles[lang]).then(function(r){ return r.json(); }).then(function(d) {
+        langData = d;
+        document.getElementById("lang-desc").textContent = info.flag + " " + info.name + " · " + langData.length + " 个模块";
+        renderMods();
+    }).catch(function(e) {
+        document.getElementById("mod-grid").innerHTML = "<div class='alert alert-danger'>加载失败: " + e.message + "</div>";
+    });
+}
+
+function renderQ(html) {
+    var area = document.getElementById("qarea");
+    area.innerHTML = html;
+    area.querySelectorAll("audio, source, #audio-div, [id^=audio-]").forEach(function(el) {
+        if(el.tagName != "SPAN") el.remove();
+    });
+    if(curCard && curCard.au) {
+        var sp = document.createElement("span");
+        sp.style.cssText = "display:inline-block;width:28px;height:28px;cursor:pointer;vertical-align:middle;margin-left:4px";
+        sp.innerHTML = '<svg viewBox="0 0 24 24" width="28" height="28"><path fill="#17a2b8" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>';
+        sp.title = "点击重播";
+        sp.onclick = function() { play(curCard.au); };
+        var firstText = area.firstChild;
+        if(firstText && firstText.nodeType === 3) {
+            firstText.parentNode.insertBefore(sp, firstText.nextSibling);
+        } else {
+            area.insertBefore(sp, area.firstChild.nextSibling);
+        }
+    }
+}
+
+function renderMods() {
+    var g = document.getElementById("mod-grid"); g.innerHTML = "";
+    var tc=0, tl=0, tm=0;
+    for(var mi=0; mi<langData.length; mi++) {
+        var m = langData[mi];
+        var all = [];
+        for(var si=0; si<m.sections.length; si++) all = all.concat(m.sections[si].cards);
+        var total = all.length;
+        var learned = 0, mastered = 0;
+        for(var ci=0; ci<all.length; ci++) {
+            var p = prog[all[ci].i];
+            if(p && (p.m || (p.r && p.r > 0))) learned++;
+            if(p && p.m) mastered++;
+        }
+        (function(modIdx) {
+            var pct = total ? Math.round(learned/total*100) : 0;
+            tc+=total; tl+=learned; tm+=mastered;
+            var div = document.createElement("div");
+            div.className = "mod-card" + (learned===total?" done":"");
+            div.innerHTML = '<div class="name">'+m.name+'</div><div class="count">'+learned+'/'+total+' ('+pct+'%)</div><div class="bar"><div class="fill" style="width:'+pct+'%"></div></div>';
+            div.onclick = function() { showSecs(modIdx); };
+            g.appendChild(div);
+        })(mi);
+    }
+    document.getElementById("gstats").innerHTML = '<div class="stat"><div class="n">'+tl+'</div><div class="l">已学</div></div><div class="stat"><div class="n">'+tm+'</div><div class="l">已掌握</div></div><div class="stat"><div class="n">'+(tc?Math.round(tl/tc*100):0)+'%</div><div class="l">总进度</div></div><div class="stat"><div class="n">'+tc+'</div><div class="l">总卡片</div></div>';
+}
+
+function showSecs(mi) {
+    curModIdx = mi;
+    var m = langData[mi];
+    document.getElementById("scr-modules").classList.add("hide");
+    document.getElementById("scr-sections").classList.remove("hide");
+    document.getElementById("sec-mod-name").textContent = m.name;
+    var all = [];
+    for(var si=0; si<m.sections.length; si++) all = all.concat(m.sections[si].cards);
+    var learned = 0;
+    for(var ci=0; ci<all.length; ci++) {
+        var p = prog[all[ci].i];
+        if(p && (p.m || (p.r && p.r > 0))) learned++;
+    }
+    document.getElementById("mod-pfill").style.width = (all.length?Math.round(learned/all.length*100):0)+"%";
+    var list = document.getElementById("sec-list"); list.innerHTML = "";
+    for(var si=0; si<m.sections.length; si++) {
+        var s = m.sections[si];
+        var total = s.cards.length;
+        var learned = 0, mastered = 0;
+        for(var ci=0; ci<s.cards.length; ci++) {
+            var p = prog[s.cards[ci].i];
+            if(p && (p.m || (p.r && p.r > 0))) learned++;
+            if(p && p.m) mastered++;
+        }
+        (function(idx) {
+            var pct = total ? Math.round(learned/total*100) : 0;
+            var div = document.createElement("div");
+            div.className = "sec-item" + (learned===total?" done":"");
+            var dn = s.name.length>55?s.name.substring(0,55)+"...":s.name;
+            div.innerHTML = '<div><div class="sn">'+dn+'</div><div class="sm">'+learned+'/'+total+' 已学 · '+mastered+' 已掌握</div><div class="sb"><div class="fill" style="width:'+pct+'%"></div></div></div><div><span class="badge bg-info">'+total+'</span></div>';
+            div.onclick = function() { startStudy(mi, idx); };
+            list.appendChild(div);
+        })(si);
+    }
+}
+
+function goHome() {
+    document.getElementById("scr-sections").classList.add("hide");
+    document.getElementById("scr-study").classList.add("hide");
+    document.getElementById("scr-modules").classList.remove("hide");
+    renderMods();
+}
+
+// Event bindings
+document.getElementById("btn-submit").onclick = submitAns;
+document.getElementById("btn-show").onclick = function() {
+    if(!curCard) return;
+    var fb = document.getElementById("fb");
+    fb.className = "fb no"; fb.innerHTML = "正确答案："+curCard.a;
+    document.getElementById("btn-show").classList.add("hide");
+};
+document.getElementById("btn-next").onclick = nextCard;
+document.getElementById("btn-easy").onclick = markEasy;
+document.getElementById("btn-42").onclick = mark42;
+document.getElementById("back-mod2").onclick = function() {
+    document.getElementById("scr-sections").classList.add("hide");
+    document.getElementById("scr-modules").classList.remove("hide");
+    renderMods();
+};
+document.getElementById("back-sec").onclick = function() {
+    document.getElementById("scr-study").classList.add("hide");
+    document.getElementById("scr-sections").classList.remove("hide");
+    showSecs(curModIdx);
+};
+document.getElementById("btn-done").onclick = function() {
+    document.getElementById("scr-study").classList.add("hide");
+    document.getElementById("scr-sections").classList.remove("hide");
+    showSecs(curModIdx);
+};
+
+document.getElementById("btn-next-sec").onclick = function() {
+    document.getElementById("scr-study").classList.add("hide");
+    // Find next section with un-mastered cards
+    for(var mi=curModIdx; mi<langData.length; mi++) {
+        for(var si=(mi===curModIdx?curSecIdx+1:0); si<langData[mi].sections.length; si++) {
+            var sec = langData[mi].sections[si];
+            for(var ci=0; ci<sec.cards.length; ci++) {
+                var p = prog[sec.cards[ci].i];
+                if(!p || !p.m) {
+                    startStudy(mi, si);
+                    return;
+                }
+            }
+        }
+    }
+    alert("\u5168\u90e8\u5b66\u4e60\u5b8c\u6210\uff01");
+    goHome();
+};
+document.addEventListener("keydown", function(e) {
+    if(e.key==="Enter") {
+        if(!document.getElementById("btn-submit").classList.contains("hide")) submitAns();
+        else if(!document.getElementById("btn-next").classList.contains("hide")) nextCard();
+    }
+});
+
+// Init
+document.getElementById("btn-start-study").onclick = startStudyAll;
+switchLang("german");</script>
+</body>
+</html>
+
+
+
+
+
