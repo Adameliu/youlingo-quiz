@@ -192,9 +192,11 @@ function loadTodayStats() {
 }
 
 function saveTodayStats() {
-    var data = {date: getTodayKey(), stats: sessStats};
-    localStorage.setItem(STATS_KEY, JSON.stringify(data));
-    db.ref(STATS_KEY).set(data);
+    try {
+        var data = {date: getTodayKey(), stats: sessStats};
+        localStorage.setItem(STATS_KEY, JSON.stringify(data));
+        db.ref(STATS_KEY).set(data);
+    } catch(e) {}
 }
 
 function updateStatsDisplay() {
