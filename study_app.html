@@ -2,7 +2,6 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#17a2b8">
@@ -67,10 +66,7 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI
 <nav class="navbar">
 <div class="container d-flex justify-content-between align-items-center">
 <span class="fw-bold" style="color:var(--primary);cursor:pointer" onclick="goHome()">Youlingo友邻国</span>
-<div style="text-align:right;line-height:1.4">
-<span id="today-cnt" class="small text-muted" style="display:block">今日: 0</span>
-<span id="review-cnt" class="small text-muted" style="display:block">待复习: 0</span>
-</div>
+<span id="today-cnt" class="small text-muted">今日: 0</span>
 </div>
 </nav>
 <div class="container" id="login-page" style="max-width:400px;margin:80px auto">
@@ -146,79 +142,7 @@ const STORAGE_KEY = "sharplingo_progress_v2";
 
 var curModIdx = -1, curSecIdx = -1;
 var cards = [], cardIdx = 0, curCard = null;
-
 var sessStats = {ok:0, no:0, tot:0};
-var STATS_KEY = "youlingo_daily_stats";
-
-function getTodayKey() {
-    var d = new Date();
-    return d.getFullYear() + "-" + (d.getMonth()+1) + "-" + d.getDate();
-}
-
-function loadTodayStats() {
-    try {
-        var saved = localStorage.getItem(STATS_KEY);
-        if(saved) {
-            var data = JSON.parse(saved);
-            var key = getTodayKey();
-            if(data.date === key) {
-                sessStats = data.stats;
-            } else {
-                sessStats = {ok:0, no:0, tot:0};
-                localStorage.setItem(STATS_KEY, JSON.stringify({date:key, stats:sessStats}));
-            }
-        }
-    } catch(e){}
-    // Sync from Firebase
-    db.ref(STATS_KEY).once("value").then(function(snapshot) {
-        var d = snapshot.val();
-        if(d && d.date === getTodayKey()) {
-            if(d.stats.tot > sessStats.tot) {
-                sessStats = d.stats;
-                localStorage.setItem(STATS_KEY, JSON.stringify(d));
-            }
-        }
-        updateStatsDisplay();
-    }).catch(function(){});
-    // Realtime listener for cross-device sync
-    db.ref(STATS_KEY).on("value", function(snapshot) {
-        var d = snapshot.val();
-        if(d && d.date === getTodayKey() && d.stats.tot > sessStats.tot) {
-            sessStats = d.stats;
-            localStorage.setItem(STATS_KEY, JSON.stringify(d));
-            updateStatsDisplay();
-        }
-    });
-}
-
-function saveTodayStats() {
-    try {
-        var data = {date: getTodayKey(), stats: sessStats};
-        localStorage.setItem(STATS_KEY, JSON.stringify(data));
-        db.ref(STATS_KEY).set(data);
-    } catch(e) {}
-}
-
-function updateStatsDisplay() {
-    var elToday = document.getElementById("today-cnt");
-    if(elToday) elToday.textContent = "今日: " + (sessStats ? sessStats.tot : 0);
-    var elReview = document.getElementById("review-cnt");
-    if(elReview) {
-        try {
-            var now = Date.now();
-            var dueCount = 0;
-            for(var key in prog) {
-                var p = prog[key];
-                if(p && !p.m && p.n && p.n < now) dueCount++;
-            }
-            elReview.textContent = "待复习: " + dueCount;
-        } catch(e) {
-            elReview.textContent = "待复习: 0";
-        }
-    }
-}
-
-
 var prog = {};
 var _audio = null;
 
@@ -290,17 +214,11 @@ firebase.auth().onAuthStateChanged(function(user) {
         document.getElementById("login-page").style.display = "none";
         document.getElementById("app").style.display = "";
         loadProg();
-        loadTodayStats();
     } else {
         document.getElementById("login-page").style.display = "";
         document.getElementById("app").style.display = "none";
     }
 });
-
-// Periodic refresh for stats display stability
-setInterval(function() {
-    updateStatsDisplay();
-}, 3000);
 
 // Register Service Worker for PWA
 if('serviceWorker' in navigator) {
@@ -621,8 +539,7 @@ function submitAns() {
         prog[curCard.i] = p;
     }
     saveProg();
-    saveTodayStats();
-    updateStatsDisplay();
+    document.getElementById("today-cnt").textContent = "\u4eca\u65e5: "+sessStats.tot;
 }
 function nextCard() { cardIdx++; showCard(); }
 
@@ -712,6 +629,7 @@ function startStudyAll() {
     curSecIdx = curSi;
     cards = allCards.map(function(x){ return x.card; });
     cardIdx = 0;
+    sessStats = {ok:0, no:0, tot:0};
     
     document.getElementById("scr-modules").classList.add("hide");
     document.getElementById("scr-sections").classList.add("hide");
@@ -808,8 +726,6 @@ function renderMods() {
             g.appendChild(div);
         })(mi);
     }
-    updateStatsDisplay();
-    updateStatsDisplay();
     document.getElementById("gstats").innerHTML = '<div class="stat"><div class="n">'+tl+'</div><div class="l">已学</div></div><div class="stat"><div class="n">'+tm+'</div><div class="l">已掌握</div></div><div class="stat"><div class="n">'+(tc?Math.round(tl/tc*100):0)+'%</div><div class="l">总进度</div></div><div class="stat"><div class="n">'+tc+'</div><div class="l">总卡片</div></div>';
 }
 
