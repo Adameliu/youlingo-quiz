@@ -11,3 +11,10 @@ Thumbs.db
 .DS_Store
 study_data_compact.json
 english_data.json
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+.env*
+!.env.example
