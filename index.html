@@ -353,7 +353,7 @@ function startStudy(mi, si) {
 }
 
 function showCard() {
-    while(cardIdx < cards.length && prog[cards[cardIdx].i] && (prog[cards[cardIdx].i].m || prog[cards[cardIdx].i].done)) cardIdx++;
+    while(cardIdx < cards.length && prog[cards[cardIdx].i] && prog[cards[cardIdx].i].m) cardIdx++;
     if(cardIdx >= cards.length) { showHooray(); return; }
     curCard = cards[cardIdx];
     document.getElementById("ctype").textContent = curCard.t || "一般";
@@ -524,7 +524,7 @@ function submitAns() {
             p.i = intervals[idx]; // days
             p.n = Date.now() + p.i * 86400000;
         }
-        p.done = true; p.m = true;
+        p.done = true;
         prog[curCard.i] = p;
     } else {
         if(!isMulti) { inp.disabled = false; inp.focus(); }
@@ -586,11 +586,14 @@ function startStudyAll() {
             for(var ci=0; ci<sec.cards.length; ci++) {
                 var c = sec.cards[ci];
                 var p = prog[c.i];
-                if(p && p.m) continue;
-                if(p && p.n && p.n < now) {
-                    reviewCards.push({card:c, modIdx:mi, secIdx:si});
-                } else if(!p || (!p.r && !p.m)) {
+                if(!p) {
                     newCards.push({card:c, modIdx:mi, secIdx:si});
+                } else if(p && p.m) {
+                    continue; // 已掌握，跳过
+                } else if(p && p.n && p.n < now) {
+                    reviewCards.push({card:c, modIdx:mi, secIdx:si}); // 到期的复习卡片
+                } else if(p && p.n && p.n >= now) {
+                    continue; // 未到期，跳过
                 }
             }
         }
