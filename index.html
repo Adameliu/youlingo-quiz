@@ -173,7 +173,7 @@ function loadProg() {
 }
 
 loadProg();
-// Load today count from localStorage
+// Load today count from localStorage + Firebase sync
 try {
     var sd = JSON.parse(localStorage.getItem('y_stats')||'{}');
     var td = new Date(), tk = td.getFullYear()+'-'+(td.getMonth()+1)+'-'+td.getDate();
@@ -181,6 +181,15 @@ try {
         var el = document.getElementById('today-cnt');
         if(el) el.textContent = '今日: '+sd.n;
     }
+    // Sync from Firebase (higher count wins)
+    db.ref('daily_stats').once('value').then(function(sn) {
+        var fd = sn.val();
+        if(fd && fd.d === tk && fd.n > (sd.n||0)) {
+            localStorage.setItem('y_stats', JSON.stringify(fd));
+            var el = document.getElementById('today-cnt');
+            if(el) el.textContent = '今日: '+fd.n;
+        }
+    }).catch(function(){});
 } catch(e){}
 
 function play(au) {
@@ -448,6 +457,7 @@ function submitAns() {
         var sd = JSON.parse(localStorage.getItem('y_stats')||'{}');
         if(sd.d !== tk) { sd = {d:tk, n:0}; }
         sd.n++; localStorage.setItem('y_stats', JSON.stringify(sd));
+        db.ref('daily_stats').set(sd).catch(function(){});
         var el = document.getElementById('today-cnt');
         if(el) el.textContent = '今日: '+sd.n;
     } catch(e){}
