@@ -214,6 +214,7 @@ firebase.auth().onAuthStateChanged(function(user) {
         document.getElementById("login-page").style.display = "none";
         document.getElementById("app").style.display = "";
         loadProg();
+        loadTodayStats();
     } else {
         document.getElementById("login-page").style.display = "";
         document.getElementById("app").style.display = "none";
@@ -629,7 +630,6 @@ function startStudyAll() {
     curSecIdx = curSi;
     cards = allCards.map(function(x){ return x.card; });
     cardIdx = 0;
-    sessStats = {ok:0, no:0, tot:0};
     
     document.getElementById("scr-modules").classList.add("hide");
     document.getElementById("scr-sections").classList.add("hide");
@@ -726,6 +726,7 @@ function renderMods() {
             g.appendChild(div);
         })(mi);
     }
+    updateStatsDisplay();
     document.getElementById("gstats").innerHTML = '<div class="stat"><div class="n">'+tl+'</div><div class="l">已学</div></div><div class="stat"><div class="n">'+tm+'</div><div class="l">已掌握</div></div><div class="stat"><div class="n">'+(tc?Math.round(tl/tc*100):0)+'%</div><div class="l">总进度</div></div><div class="stat"><div class="n">'+tc+'</div><div class="l">总卡片</div></div>';
 }
 
