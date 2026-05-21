@@ -624,7 +624,8 @@ function resetModule() {
 
 
 var langData = [];
-var langFiles = {"german": "study_data_compact.json", "english": "english_data.json"};
+var R2_DATA = "https://pub-1c1a3bd3f4554dc4afce6c91070cf22e.r2.dev";
+var langFiles = {"german": R2_DATA+"/study_data_compact.json", "english": R2_DATA+"/english_data.json"};
 var langInfo = {"german": {"name": "Deutsch", "flag": "🇩🇪"}, "english": {"name": "English", "flag": "🇬🇧"}};
 
 function switchLang(lang) {
