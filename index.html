@@ -443,10 +443,12 @@ function submitAns() {
         document.getElementById("btn-42").classList.remove("hide");
         var p = prog[curCard.i] || {};
         p.r = (p.r||0) + 1;
-        p.i = p.r===1 ? 1 : p.r===2 ? 3 : Math.round((p.i||0) * (p.e||2.5));
-        p.e = Math.max(1.3, (p.e||2.5) + 0.1);
-        p.n = Date.now() + (p.i>0 ? p.i*86400000 : 60000);
-        p.done = true; p.m = true;
+        // Sharplingo-style: 1h -> 2h -> 5h -> 25h -> 4d -> 10d -> 20d -> 40d
+        var levels = [1, 2, 5, 25, 4, 10, 20, 40];
+        var idx = Math.min(p.r - 1, levels.length - 1);
+        if(p.r <= 4) { p.i = levels[idx]; p.n = Date.now() + p.i * 3600000; }
+        else { p.i = levels[idx]; p.n = Date.now() + p.i * 86400000; }
+        p.done = true;
         prog[curCard.i] = p;
     } else {
         if(!isMulti) { inp.disabled = false; inp.focus(); }
