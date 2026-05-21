@@ -9,5 +9,3 @@ __pycache__/
 # 系统文件
 Thumbs.db
 .DS_Store
-study_data_compact.json
-english_data.json
