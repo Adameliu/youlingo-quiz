@@ -169,14 +169,26 @@ function loadTodayStats() {
             }
         }
     } catch(e){}
+    // Sync from Firebase
     db.ref(STATS_KEY).once("value").then(function(snapshot) {
+        var d = snapshot.val();
+        if(d && d.date === getTodayKey()) {
+            if(d.stats.tot > sessStats.tot) {
+                sessStats = d.stats;
+                localStorage.setItem(STATS_KEY, JSON.stringify(d));
+            }
+        }
+        updateStatsDisplay();
+    }).catch(function(){});
+    // Realtime listener for cross-device sync
+    db.ref(STATS_KEY).on("value", function(snapshot) {
         var d = snapshot.val();
         if(d && d.date === getTodayKey() && d.stats.tot > sessStats.tot) {
             sessStats = d.stats;
             localStorage.setItem(STATS_KEY, JSON.stringify(d));
+            updateStatsDisplay();
         }
-        updateStatsDisplay();
-    }).catch(function(){});
+    });
 }
 
 function saveTodayStats() {
@@ -186,15 +198,22 @@ function saveTodayStats() {
 }
 
 function updateStatsDisplay() {
-    document.getElementById("today-cnt").textContent = "今日: " + sessStats.tot;
-    var now = Date.now();
-    var dueCount = 0;
-    for(var key in prog) {
-        var p = prog[key];
-        if(p && !p.m && p.n && p.n < now) dueCount++;
+    var elToday = document.getElementById("today-cnt");
+    if(elToday) elToday.textContent = "今日: " + (sessStats ? sessStats.tot : 0);
+    var elReview = document.getElementById("review-cnt");
+    if(elReview) {
+        try {
+            var now = Date.now();
+            var dueCount = 0;
+            for(var key in prog) {
+                var p = prog[key];
+                if(p && !p.m && p.n && p.n < now) dueCount++;
+            }
+            elReview.textContent = "待复习: " + dueCount;
+        } catch(e) {
+            elReview.textContent = "待复习: 0";
+        }
     }
-    var el = document.getElementById("review-cnt");
-    if(el) el.textContent = "待复习: " + dueCount;
 }
 
 
