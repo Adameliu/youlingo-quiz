@@ -270,13 +270,17 @@ window.addEventListener('beforeinstallprompt', function(e) {
 window.addEventListener('appinstalled', function() {
     deferredPrompt = null;
 });
+
 function installApp() {
-    if(!deferredPrompt) return;
-    deferredPrompt.prompt();
-    deferredPrompt.userChoice.then(function() {
-        deferredPrompt = null;
-        document.getElementById('btn-install').classList.add('hide');
-    });
+    if(deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(function() {
+            deferredPrompt = null;
+            document.getElementById('btn-install').classList.add('hide');
+        });
+        return;
+    }
+    alert("Chrome 不支持自动弹窗。请在浏览器菜单中选择「添加到主屏幕」。");
 }
 function play(au) {
     if(!au) return;
