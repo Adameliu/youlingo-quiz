@@ -66,6 +66,7 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI
 <span class="fw-bold" style="color:var(--primary);cursor:pointer" onclick="goHome()">Youlingo友邻国</span>
 <span id="today-cnt" class="small text-muted">今日: 0</span>
 <span id="review-cnt" class="small text-muted" style="margin-left:10px">待复习: 0</span>
+<button class="btn btn-sm btn-success hide" id="btn-install" style="border-radius:15px;padding:1px 10px;font-size:.75rem;margin-left:8px" onclick="installApp()">📲 安装</button>
 </div>
 </nav>
 
@@ -254,6 +255,29 @@ firebase.auth().onAuthStateChanged(function(user) {
     }
 });
 
+
+// PWA
+if('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/service-worker.js');
+}
+var deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', function(e) {
+    e.preventDefault();
+    deferredPrompt = e;
+    var btn = document.getElementById('btn-install');
+    if(btn) btn.classList.remove('hide');
+});
+window.addEventListener('appinstalled', function() {
+    deferredPrompt = null;
+});
+function installApp() {
+    if(!deferredPrompt) return;
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(function() {
+        deferredPrompt = null;
+        document.getElementById('btn-install').classList.add('hide');
+    });
+}
 function play(au) {
     if(!au) return;
     try {
