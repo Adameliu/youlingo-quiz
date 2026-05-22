@@ -649,9 +649,18 @@ function startStudyAll() {
 }
 
 function resetAll() {
-    if(!confirm("\u786e\u5b9a\u8981\u91cd\u7f6e\u5168\u90e8\u8fdb\u5ea6\u5417\uff1f")) return;
-    localStorage.removeItem("sharplingo_progress_v2");
-    prog = {}; renderMods();
+    var lang = langData.length > 0 ? langData[0].name.indexOf("Deutsch") >= 0 ? "德语" : "英语" : "当前语言";
+    if(!confirm("\u786e\u5b9a\u8981\u91cd\u7f6e" + lang + "\u7684\u5168\u90e8\u8fdb\u5ea6\u5417\uff1f\u6b64\u64cd\u4f5c\u4e0d\u53ef\u6062\u590d\uff01")) return;
+    // Only reset cards in current language
+    for(var mi=0; mi<langData.length; mi++) {
+        for(var si=0; si<langData[mi].sections.length; si++) {
+            for(var ci=0; ci<langData[mi].sections[si].cards.length; ci++) {
+                delete prog[langData[mi].sections[si].cards[ci].i];
+            }
+        }
+    }
+    saveProg();
+    renderMods();
 }
 
 function resetModule() {
