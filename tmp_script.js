@@ -87,6 +87,14 @@ try {
 
 // Auth functions
 var isDemo = false;
+function doLogout() {
+    if(!isDemo) { firebase.auth().signOut(); }
+    isDemo = false;
+    try { localStorage.removeItem("y_demo"); } catch(e){}
+    document.getElementById("app").style.display = "none";
+    document.getElementById("login-page").style.display = "";
+    location.reload();
+}
 function demoLogin() {
     isDemo = true;
     localStorage.setItem("y_demo", "1");
