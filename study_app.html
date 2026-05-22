@@ -383,7 +383,7 @@ function startStudy(mi, si) {
 }
 
 function showCard() {
-    while(cardIdx < cards.length && prog[cards[cardIdx].i] && (prog[cards[cardIdx].i].m || prog[cards[cardIdx].i].done)) cardIdx++;
+    while(cardIdx < cards.length && prog[cards[cardIdx].i] && prog[cards[cardIdx].i].m) cardIdx++;
     if(cardIdx >= cards.length) { showHooray(); return; }
     curCard = cards[cardIdx];
     document.getElementById("ctype").textContent = curCard.t || "一般";
