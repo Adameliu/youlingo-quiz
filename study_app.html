@@ -500,7 +500,7 @@ function submitAns() {
     var isMulti = curCard.fields && curCard.fields.length > 1;
     var inp = document.getElementById("ans-inp"), fb = document.getElementById("fb");
     
-    if(prog[curCard.i] && prog[curCard.i].done) return;
+    // Allow re-answering done cards
     
     var correct = false;
     if(isMulti) {
