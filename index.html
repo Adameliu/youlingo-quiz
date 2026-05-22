@@ -303,7 +303,18 @@ function installApp() {
         });
         return;
     }
-    alert("Chrome 不支持自动弹窗。请在浏览器菜单中选择「添加到主屏幕」。");
+    // Try to detect iOS
+    var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    if(isIOS) {
+        alert("在 Safari 中点击分享按钮 → 添加到主屏幕");
+        return;
+    }
+    // Fallback for Android Chrome where event already fired
+    if(/Android/.test(navigator.userAgent) && 'onbeforeinstallprompt' in window) {
+        alert("请在 Chrome 菜单中点击「添加到主屏幕」");
+        return;
+    }
+    alert("请在浏览器菜单中选择「添加到主屏幕」");
 }
 function play(au) {
     if(!au) return;
