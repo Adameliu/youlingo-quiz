@@ -243,7 +243,14 @@ function startStudy(mi, si) {
         var p = prog[c.i];
         if(!p || !p.m) available.push(c);
     }
-    if(available.length === 0) available = sec.cards.slice();
+    if(available.length === 0) {
+        available = sec.cards.slice();
+        for(var ci=0; ci<sec.cards.length; ci++) {
+            var p = prog[sec.cards[ci].i];
+            if(p) { delete p.m; delete p.done; }
+        }
+        saveProg();
+    }
     var typeOrder = ["dictation","dictationChinese","meaningChinese","word","multi","gender","plural","feminine","pastParticiple","isSeparable","presentTenseConjugation","pastTenseConjugation","konjunktivII","imperativ","comparativ","superlativ","phrase","custom","array","一般"];
     var groups = {};
     for(var ci=0; ci<available.length; ci++) {
