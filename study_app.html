@@ -80,7 +80,8 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI
     <input type="password" id="login-pass" class="form-control" placeholder="密码" autocomplete="current-password">
   </div>
   <button id="btn-login" class="btn btn-primary w-100 mb-2" onclick="login()">登录</button>
-  <p class="text-center small text-muted mt-3">请输入您在 Firebase 创建的账号</p>
+  <button class="btn btn-outline-success w-100" onclick="demoLogin()">🎮 Demo 体验（无需账号）</button>
+  <p class="text-center small text-muted mt-3">请输入 Firebase 账号，或点击 Demo</p>
 </div>
 
 <div class="container" id="app" style="display:none">
@@ -164,11 +165,12 @@ var R2_BASE = "https://pub-1c1a3bd3f4554dc4afce6c91070cf22e.r2.dev";
 
 function saveProg() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(prog));
-    db.ref(SYNC_KEY).set(prog);
+    if(!isDemo) db.ref(SYNC_KEY).set(prog);
 }
 
 function loadProg() {
     try { var p = localStorage.getItem(STORAGE_KEY); if(p) prog = JSON.parse(p); } catch(e) {}
+    if(isDemo) { renderMods(); return; }
     db.ref(SYNC_KEY).once("value").then(function(snapshot) {
         var d = snapshot.val();
         if(d && Object.keys(d).length > Object.keys(prog).length) {
@@ -225,6 +227,15 @@ try {
 
 
 // Auth functions
+var isDemo = false;
+function demoLogin() {
+    isDemo = true;
+    localStorage.setItem("y_demo", "1");
+    document.getElementById("login-page").style.display = "none";
+    document.getElementById("app").style.display = "";
+    document.getElementById("app").insertAdjacentHTML("afterbegin", '<div class="alert alert-info text-center py-1 mb-2" style="font-size:.8rem">🎮 Demo 模式 · 进度仅存本地</div>');
+    loadProg();
+}
 function login() {
     var email = document.getElementById("login-email").value.trim();
     var pass = document.getElementById("login-pass").value;
@@ -244,10 +255,14 @@ function login() {
 }
 
 // Check auth state on load
+try { if(localStorage.getItem("y_demo") === "1") { isDemo = true; } } catch(e){}
 firebase.auth().onAuthStateChanged(function(user) {
-    if(user) {
+    if(user || isDemo) {
         document.getElementById("login-page").style.display = "none";
         document.getElementById("app").style.display = "";
+        if(isDemo) {
+            document.getElementById("app").insertAdjacentHTML("afterbegin", '<div class="alert alert-info text-center py-1 mb-2" style="font-size:.8rem">🎮 Demo 模式 · 进度仅存本地</div>');
+        }
         loadProg();
     } else {
         document.getElementById("login-page").style.display = "";
