@@ -499,12 +499,15 @@ function mark42() {
     saveProg(); cardIdx++; showCard();
 }
 
+var _studySkipTo = null;
 function startStudyAll() {
     // Find current learning position: first module+section with un-mastered cards
     var now = Date.now();
     var curMi = -1, curSi = -1;
     for(var mi=0; mi<langData.length; mi++) {
         for(var si=0; si<langData[mi].sections.length; si++) {
+            if(_studySkipTo && (mi < _studySkipTo.mi || (mi === _studySkipTo.mi && si < _studySkipTo.si))) continue;
+            if(_studySkipTo) _studySkipTo = null;
             var sec = langData[mi].sections[si];
             for(var ci=0; ci<sec.cards.length; ci++) {
                 var p = prog[sec.cards[ci].i];
@@ -539,9 +542,19 @@ function startStudyAll() {
     }
     
     if(reviewCards.length === 0 && newCards.length === 0) {
-        alert("\u8be5\u8282\u5df2\u5168\u90e8\u5b66\u4e60\u5b8c\u6210\uff0c\u8bf7\u8fdb\u5165\u4e0b\u4e00\u8282\uff01");
+        _studySkipTo = {mi: curMi, si: curSi + 1};
+        if(_studySkipTo.si >= langData[_studySkipTo.mi].sections.length) {
+            _studySkipTo.mi++; _studySkipTo.si = 0;
+        }
+        if(_studySkipTo.mi >= langData.length) {
+            alert("\u5168\u90e8\u5b66\u4e60\u5b8c\u6210\uff01");
+            _studySkipTo = null;
+            return;
+        }
+        startStudyAll();
         return;
     }
+    _studySkipTo = null;
     
     function sortCards(arr) {
         var groups = {};
