@@ -15,6 +15,11 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI
 .container{max-width:720px;margin:0 auto;padding:15px}
 .navbar{background:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
 .grid-3{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.loading-bar{height:3px;background:#e0e0e0;border-radius:2px;overflow:hidden;margin:5px 0}
+.loading-bar::after{content:"";display:block;height:100%;width:30%;background:var(--primary);border-radius:2px;animation:loadSlide 1.2s ease-in-out infinite}
+@keyframes loadSlide{0%{transform:translateX(-30%)}100%{transform:translateX(400%)}}
+.fade-in{animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 .mod-card{background:#fff;border-radius:12px;padding:14px;text-align:center;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,0.05);border:2px solid transparent;transition:all .15s}
 .mod-card:hover{border-color:var(--primary)}
 .mod-card.done{opacity:.65}
@@ -75,7 +80,8 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI
 </nav>
 
 <div class="container" id="login-page" style="max-width:400px;margin:80px auto">
-  <h3 class="text-center mb-4" style="color:var(--primary)">🔐 Youlingo 登录</h3>
+  <h3 class="text-center mb-1" style="color:var(--primary)">🔐 Youlingo 友邻国</h3>
+  <p class="text-center small text-muted mb-4" style="font-size:.85rem">科学间隔重复 · 掌握多门语言</p>
   <div id="login-error" class="alert alert-danger hide"></div>
   <div class="mb-3">
     <input type="email" id="login-email" class="form-control" placeholder="邮箱" autocomplete="email">
@@ -131,7 +137,7 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI
 <button class="btn btn-sm btn-secondary hide" id="btn-show">显示答案</button>
 <button class="btn btn-sm btn-success hide" id="btn-next">下一题</button>
 <button class="btn btn-sm btn-warning hide" id="btn-easy">太简单了</button>
-<button class="btn btn-sm btn-info hide" id="btn-42">42天后</button>
+<button class="btn btn-sm btn-info hide" id="btn-42" title="42 天后再见">⏸ 跳过</button>
 </div>
 <div class="hooray hide" id="hooray">
 <i class="far fa-check-circle"></i>
@@ -241,11 +247,12 @@ function doLogout() {
     location.reload();
 }
 function demoLogin() {
+    if(!confirm("🎮 Demo 模式\n\n• 进度仅保存在本地浏览器\n• 清除缓存或换设备会丢失数据\n\n建议使用邮箱登录以同步进度")) return;
     isDemo = true;
     localStorage.setItem("y_demo", "1");
     document.getElementById("login-page").style.display = "none";
     document.getElementById("app").style.display = "";
-    document.getElementById("app").insertAdjacentHTML("afterbegin", '<div class="alert alert-info text-center py-1 mb-2" style="font-size:.8rem">🎮 Demo 模式 · 进度仅存本地</div>');
+    document.getElementById("app").insertAdjacentHTML("afterbegin", '<div class="alert alert-warning text-center py-1 mb-2" style="font-size:.8rem">⚠️ Demo 模式 · 清除缓存后数据会丢失</div>');
     loadProg();
 }
 function login() {
@@ -273,7 +280,7 @@ firebase.auth().onAuthStateChanged(function(user) {
         document.getElementById("login-page").style.display = "none";
         document.getElementById("app").style.display = "";
         if(isDemo) {
-            document.getElementById("app").insertAdjacentHTML("afterbegin", '<div class="alert alert-info text-center py-1 mb-2" style="font-size:.8rem">🎮 Demo 模式 · 进度仅存本地</div>');
+            document.getElementById("app").insertAdjacentHTML("afterbegin", '<div class="alert alert-warning text-center py-1 mb-2" style="font-size:.8rem">⚠️ Demo 模式 · 清除缓存后数据会丢失</div>');
         }
         loadProg();
     } else {
@@ -764,7 +771,7 @@ function switchLang(lang) {
     document.getElementById("btn-lang-en").className = lang==="english" ? "btn btn-lg btn-primary" : "btn btn-lg btn-outline-secondary";
     var info = langInfo[lang];
     document.getElementById("lang-desc").textContent = info.flag + " " + info.name + " 加载中...";
-    document.getElementById("mod-grid").innerHTML = "<div class='text-center mt-3'><div class='spinner-border text-primary'></div></div>";
+    document.getElementById("mod-grid").innerHTML = "<div class='loading-bar' style='max-width:300px;margin:40px auto'></div><p class='text-center text-muted small'>正在下载词库...</p>";
     fetch(langFiles[lang]).then(function(r){ return r.json(); }).then(function(d) {
         langData = d;
         document.getElementById("lang-desc").textContent = info.flag + " " + info.name + " · " + langData.length + " 个模块";

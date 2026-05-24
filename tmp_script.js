@@ -96,11 +96,12 @@ function doLogout() {
     location.reload();
 }
 function demoLogin() {
+    if(!confirm("🎮 Demo 模式\n\n• 进度仅保存在本地浏览器\n• 清除缓存或换设备会丢失数据\n\n建议使用邮箱登录以同步进度")) return;
     isDemo = true;
     localStorage.setItem("y_demo", "1");
     document.getElementById("login-page").style.display = "none";
     document.getElementById("app").style.display = "";
-    document.getElementById("app").insertAdjacentHTML("afterbegin", '<div class="alert alert-info text-center py-1 mb-2" style="font-size:.8rem">🎮 Demo 模式 · 进度仅存本地</div>');
+    document.getElementById("app").insertAdjacentHTML("afterbegin", '<div class="alert alert-warning text-center py-1 mb-2" style="font-size:.8rem">⚠️ Demo 模式 · 清除缓存后数据会丢失</div>');
     loadProg();
 }
 function login() {
@@ -128,7 +129,7 @@ firebase.auth().onAuthStateChanged(function(user) {
         document.getElementById("login-page").style.display = "none";
         document.getElementById("app").style.display = "";
         if(isDemo) {
-            document.getElementById("app").insertAdjacentHTML("afterbegin", '<div class="alert alert-info text-center py-1 mb-2" style="font-size:.8rem">🎮 Demo 模式 · 进度仅存本地</div>');
+            document.getElementById("app").insertAdjacentHTML("afterbegin", '<div class="alert alert-warning text-center py-1 mb-2" style="font-size:.8rem">⚠️ Demo 模式 · 清除缓存后数据会丢失</div>');
         }
         loadProg();
     } else {
@@ -619,7 +620,7 @@ function switchLang(lang) {
     document.getElementById("btn-lang-en").className = lang==="english" ? "btn btn-lg btn-primary" : "btn btn-lg btn-outline-secondary";
     var info = langInfo[lang];
     document.getElementById("lang-desc").textContent = info.flag + " " + info.name + " 加载中...";
-    document.getElementById("mod-grid").innerHTML = "<div class='text-center mt-3'><div class='spinner-border text-primary'></div></div>";
+    document.getElementById("mod-grid").innerHTML = "<div class='loading-bar' style='max-width:300px;margin:40px auto'></div><p class='text-center text-muted small'>正在下载词库...</p>";
     fetch(langFiles[lang]).then(function(r){ return r.json(); }).then(function(d) {
         langData = d;
         document.getElementById("lang-desc").textContent = info.flag + " " + info.name + " · " + langData.length + " 个模块";
