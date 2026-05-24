@@ -214,26 +214,14 @@ function checkAns(ua, ca) {
     for(var i=0; i<alts.length; i++) {
         var a = norm(alts[i]);
         var ap = stripPunct(a);
-        if(/[A-Z\u00c4\u00d6\u00dc]/.test(a)) {
-            if(u === a || up === ap) return true;
-        } else {
-            var ul = u.toLowerCase();
-            var al = a.toLowerCase();
-            if(ul === al || stripPunct(ul) === stripPunct(al)) return true;
-        }
+        if(u === a || up === ap) return true;
     }
     if(ca.indexOf("\u6216") === -1 && ca.indexOf(",") >= 0) {
         var ca2 = ca.split(",").map(function(s){ return norm(s); }).filter(Boolean);
         for(var i=0; i<ca2.length; i++) {
             var a = norm(ca2[i]);
             var ap = stripPunct(a);
-            if(/[A-Z\u00c4\u00d6\u00dc]/.test(a)) {
-                if(u === a || up === ap) return true;
-            } else {
-                var ul = u.toLowerCase();
-                var al = a.toLowerCase();
-                if(ul === al || stripPunct(ul) === stripPunct(al)) return true;
-            }
+            if(u === a || up === ap) return true;
         }
     }
     return false;
