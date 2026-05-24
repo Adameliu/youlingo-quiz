@@ -112,3 +112,7 @@ python -m http.server 8080
 - 音频文件存储于 Cloudflare R2，需自建存储桶并更新 `R2_BASE` 变量
 - Firebase 配置需替换为自己的 `firebaseConfig`
 - Demo 模式下进度仅保存在浏览器本地
+
+---
+
+© 2026 Michael.Liu. All rights reserved.
