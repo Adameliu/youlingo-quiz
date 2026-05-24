@@ -176,22 +176,15 @@ function installApp() {
     }
     alert("请在浏览器菜单中选择「添加到主屏幕」");
 }
-function play(au, auto) {
+function play(au) {
     if(!au) return;
     try {
         if(!_audio) _audio = new Audio();
-        var fn = au.split("/").pop();
-        if(!auto && _audio.src && _audio.src.endsWith("/"+fn) && !_audio.paused) {
-            _audio.pause();
-            document.getElementById("btn-play").textContent = "▶ 播放";
-            return;
-        }
         _audio.pause();
         _audio.currentTime = 0;
+        var fn = au.split("/").pop();
         _audio.src = R2_BASE + "/" + fn;
         _audio.play()["catch"](function(){});
-        document.getElementById("btn-play").textContent = "⏸ 暂停";
-        _audio.onended = function() { document.getElementById("btn-play").textContent = "🔊 播放"; };
     } catch(e){}
 }
 
@@ -368,7 +361,6 @@ function showCard() {
 
     document.getElementById("fb").className = "fb hide";
     document.getElementById("btn-submit").classList.remove("hide");
-    document.getElementById("btn-play").classList.add("hide");
     document.getElementById("btn-show").classList.add("hide");
     document.getElementById("btn-next").classList.add("hide");
     document.getElementById("btn-easy").classList.add("hide");
@@ -376,8 +368,7 @@ function showCard() {
     document.getElementById("hooray").classList.add("hide");
     
     if(curCard.au) {
-        document.getElementById("btn-play").classList.remove("hide");
-        play(curCard.au, true);
+        play(curCard.au);
         // Preload next card for instant playback
         if(cardIdx + 1 < cards.length && cards[cardIdx + 1].au) {
             preloadAudio(cards[cardIdx + 1].au);
