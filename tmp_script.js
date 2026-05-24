@@ -426,7 +426,9 @@ function submitAns() {
         var ua = inp.value.trim();
         correct = checkAns(ua, curCard.a);
         fb.className = "fb " + (correct?"ok":"no");
-        fb.innerHTML = correct ? "\u2713 \u7b54\u5bf9\u4e86\uff01\u6b63\u786e\u7b54\u6848\uff1a"+curCard.a : "\u2717 \u6b63\u786e\u7b54\u6848\uff1a"+curCard.a;
+        var hint = "";
+        if(!correct && ua.toLowerCase() === curCard.a.toLowerCase()) hint = " (\u6ce8\u610f\u5927\u5c0f\u5199)";
+        fb.innerHTML = correct ? "\u2713 \u7b54\u5bf9\u4e86\uff01\u6b63\u786e\u7b54\u6848\uff1a"+curCard.a : "\u2717 \u6b63\u786e\u7b54\u6848\uff1a"+curCard.a+hint;
         inp.className = "form-control inp " + (correct?"ok":"no");
     }
     

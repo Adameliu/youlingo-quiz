@@ -99,7 +99,7 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI
 <div id="scr-modules">
 <div class="text-center mb-3"><button class="btn btn-lg btn-primary" id="btn-lang-de" style="border-radius:30px;padding:8px 30px;margin:4px;min-width:140px" onclick="switchLang('german')">🇩🇪 德语</button><button class="btn btn-lg btn-outline-secondary" id="btn-lang-en" style="border-radius:30px;padding:8px 30px;margin:4px;min-width:140px" onclick="switchLang('english')">🇬🇧 英语</button></div>
 <h5>选择模块</h5>
-<p class="small text-muted" id="lang-desc">请先选择上方语言</p>
+<p class="small text-muted" id="lang-desc">正在加载...</p>
 <div class="text-center mb-3"><button class="btn btn-primary btn-lg" id="btn-start-study" style="border-radius:30px;padding:10px 40px">开始学习</button>
 <button class="btn btn-outline-danger btn-sm ms-2" id="btn-reset-all" style="border-radius:20px" onclick="resetAll()">重置全部进度</button></div>
 <div class="grid-3" id="mod-grid"></div>
@@ -139,7 +139,7 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI
 <button class="btn btn-sm btn-warning hide" id="btn-easy">太简单了</button>
 <button class="btn btn-sm btn-info hide" id="btn-42" title="42 天后再见">⏸ 跳过</button>
 </div>
-<div class="hooray hide" id="hooray">
+<div class="hooray hide fade-in" id="hooray">
 <i class="far fa-check-circle"></i>
 <h5 class="mt-2">本节已完成！</h5>
 <button class="btn btn-primary mt-2" id="btn-done">返回小节</button>
@@ -577,7 +577,9 @@ function submitAns() {
         var ua = inp.value.trim();
         correct = checkAns(ua, curCard.a);
         fb.className = "fb " + (correct?"ok":"no");
-        fb.innerHTML = correct ? "\u2713 \u7b54\u5bf9\u4e86\uff01\u6b63\u786e\u7b54\u6848\uff1a"+curCard.a : "\u2717 \u6b63\u786e\u7b54\u6848\uff1a"+curCard.a;
+        var hint = "";
+        if(!correct && ua.toLowerCase() === curCard.a.toLowerCase()) hint = " (\u6ce8\u610f\u5927\u5c0f\u5199)";
+        fb.innerHTML = correct ? "\u2713 \u7b54\u5bf9\u4e86\uff01\u6b63\u786e\u7b54\u6848\uff1a"+curCard.a : "\u2717 \u6b63\u786e\u7b54\u6848\uff1a"+curCard.a+hint;
         inp.className = "form-control inp " + (correct?"ok":"no");
     }
     
