@@ -207,20 +207,22 @@ function stripPunct(s) {
     return s.replace(/[.,!?\u3002\uFF0C\u3001\uFF01\uFF1F\u002E]+$/g, "");
 }
 
+function normApost(s) { return s.replace(/[\u2018\u2019\u201A\u201B\u2032\u2035`']/g, "'"); }
+
 function checkAns(ua, ca) {
     if(!ua || !ca) return false;
-    var u = norm(ua);
+    var u = normApost(norm(ua));
     var up = stripPunct(u);
-    var alts = ca.split("\u6216").map(function(s){ return norm(s); }).filter(Boolean);
+    var alts = ca.split("\u6216").map(function(s){ return normApost(norm(s)); }).filter(Boolean);
     for(var i=0; i<alts.length; i++) {
         var a = norm(alts[i]);
         var ap = stripPunct(a);
         if(u === a || up === ap) return true;
     }
     if(ca.indexOf("\u6216") === -1 && ca.indexOf(",") >= 0) {
-        var ca2 = ca.split(",").map(function(s){ return norm(s); }).filter(Boolean);
+        var ca2 = ca.split(",").map(function(s){ return normApost(norm(s)); }).filter(Boolean);
         for(var i=0; i<ca2.length; i++) {
-            var a = norm(ca2[i]);
+            var a = normApost(norm(ca2[i]));
             var ap = stripPunct(a);
             if(u === a || up === ap) return true;
         }
