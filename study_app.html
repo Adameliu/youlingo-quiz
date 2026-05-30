@@ -899,8 +899,18 @@ function updateReviewCount() {
     } catch(e) {}
 }
 
+function updateTodayCnt() {
+    try {
+        var sd = JSON.parse(localStorage.getItem('y_stats')||'{}');
+        var td = new Date(), tk = td.getFullYear()+'-'+(td.getMonth()+1)+'-'+td.getDate();
+        var n = sd.d === tk ? sd.n : sessStats.tot;
+        var el = document.getElementById('today-cnt');
+        if(el) el.textContent = '\u4eca\u65e5: '+Math.max(n, sessStats.tot);
+    } catch(e){}
+}
 function renderMods() {
     updateReviewCount();
+    updateTodayCnt();
     var g = document.getElementById("mod-grid"); g.innerHTML = "";
     var tc=0, tl=0, tm=0;
     for(var mi=0; mi<langData.length; mi++) {
