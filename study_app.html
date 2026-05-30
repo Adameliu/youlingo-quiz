@@ -181,7 +181,9 @@ var firebaseConfig = {
 try { firebase.initializeApp(firebaseConfig); } catch(e) { showFatal('Firebase 初始化失败: '+e.message); }
 var db = null;
 try { db = firebase.database(); } catch(e) { showFatal('数据库连接失败: '+e.message); }
-var SYNC_KEY = "progress_v2";
+var _uid = null;
+function syncPath() { return _uid ? "progress/"+_uid : null; }
+function statsPath() { return _uid ? "daily_stats/"+_uid : null; }
 var R2_BASE = "https://pub-1c1a3bd3f4554dc4afce6c91070cf22e.r2.dev";
 
 var _saveTimer = null;
@@ -192,7 +194,7 @@ function saveProg() {
     if(_saveTimer) clearTimeout(_saveTimer);
     _saveTimer = setTimeout(function() {
         _syncing = true;
-        db.ref(SYNC_KEY).set(prog).then(function() { _syncing = false; }).catch(function() { _syncing = false; });
+        var sp=syncPath();if(sp)db.ref(sp).set(prog).then(function() { _syncing = false; }).catch(function() { _syncing = false; });
     }, 300);
 }
 
@@ -209,7 +211,7 @@ function loadProg() {
     try { var p = localStorage.getItem(STORAGE_KEY); if(p) prog = JSON.parse(p); } catch(e) {}
     if(isDemo) { renderMods(); return; }
     // Sync from Firebase: merge remote into local, newer n wins
-    db.ref(SYNC_KEY).once("value").then(function(snapshot) {
+    var sp=syncPath();sp&&db.ref(sp).once("value").then(function(snapshot) {
         var d = snapshot.val();
         if(d) {
             var merged = false;
@@ -227,7 +229,7 @@ function loadProg() {
         renderMods();
     }).catch(function(){});
     // Listen for realtime changes (skip our own writes)
-    db.ref(SYNC_KEY).on("value", function(snapshot) {
+    var sp=syncPath();sp&&db.ref(sp).on("value", function(snapshot) {
         if(_syncing) return;
         var d = snapshot.val();
         if(d && JSON.stringify(d) !== JSON.stringify(prog)) {
@@ -248,7 +250,7 @@ try {
         if(el) el.textContent = '今日: '+sd.n;
     }
     // Sync from Firebase (higher count wins)
-    db.ref('daily_stats').once('value').then(function(sn) {
+    var sp=statsPath();sp&&db.ref(sp).once('value').then(function(sn) {
         var fd = sn.val();
         if(fd && fd.d === tk && fd.n > (sd.n||0)) {
             localStorage.setItem('y_stats', JSON.stringify(fd));
@@ -257,7 +259,7 @@ try {
         }
     }).catch(function(){});
     // Real-time sync across devices
-    db.ref('daily_stats').on('value', function(sn) {
+    var sp=statsPath();sp&&db.ref(sp).on('value', function(sn) {
         try {
             var fd = sn.val();
             var td2 = new Date(), tk2 = td2.getFullYear()+'-'+(td2.getMonth()+1)+'-'+td2.getDate();
@@ -314,6 +316,7 @@ function login() {
 // Check auth state on load
 try { if(localStorage.getItem("y_demo") === "1") { isDemo = true; } } catch(e){}
 firebase.auth().onAuthStateChanged(function(user) {
+    if(user) _uid = user.uid;
     if(user || isDemo) {
         document.getElementById("login-page").style.display = "none";
         document.getElementById("app").style.display = "";
@@ -630,7 +633,7 @@ function submitAns() {
         var sd = JSON.parse(localStorage.getItem('y_stats')||'{}');
         if(sd.d !== tk) { sd = {d:tk, n:0}; }
         sd.n++; localStorage.setItem('y_stats', JSON.stringify(sd));
-        db.ref('daily_stats').set(sd).catch(function(){});
+        var sp=statsPath();sp&&db.ref(sp).set(sd).catch(function(){});
         var el = document.getElementById('today-cnt');
         if(el) el.textContent = '今日: '+sd.n;
     } catch(e){}
