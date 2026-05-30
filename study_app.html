@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Youlingo友邻国</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="manifest" href="/manifest.json">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -150,7 +151,7 @@ body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI
 
 </div>
 <script>
-const STORAGE_KEY = "sharplingo_progress_v2";
+const STORAGE_KEY = "youlingo_progress_v2";
 
 var curModIdx = -1, curSecIdx = -1;
 var cards = [], cardIdx = 0, curCard = null;
@@ -179,6 +180,15 @@ function saveProg() {
 }
 
 function loadProg() {
+    // Migrate old storage key
+    try {
+        var oldKey = "sharplingo_progress_v2";
+        var oldData = localStorage.getItem(oldKey);
+        if(oldData && !localStorage.getItem(STORAGE_KEY)) {
+            localStorage.setItem(STORAGE_KEY, oldData);
+        }
+        localStorage.removeItem(oldKey);
+    } catch(e){}
     try { var p = localStorage.getItem(STORAGE_KEY); if(p) prog = JSON.parse(p); } catch(e) {}
     if(isDemo) { renderMods(); return; }
     // Sync from Firebase: merge remote into local, newer n wins
@@ -615,7 +625,7 @@ function submitAns() {
         document.getElementById("btn-42").classList.remove("hide");
         var p = prog[curCard.i] || {};
         p.r = (p.r||0) + 1;
-        // Sharplingo-style: 1h -> 2h -> 5h -> 25h -> 4d -> 10d -> 20d -> 40d
+        // 间隔重复: 1h -> 2h -> 5h -> 25h -> 4d -> 10d -> 20d -> 40d
         var levels = [1, 2, 5, 25, 4, 10, 20, 40];
         var idx = Math.min(p.r - 1, levels.length - 1);
         if(p.r <= 4) { p.i = levels[idx]; p.n = Date.now() + p.i * 3600000; }
