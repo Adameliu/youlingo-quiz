@@ -30,11 +30,21 @@ function saveProg() {
 function loadProg() {
     try { var p = localStorage.getItem(STORAGE_KEY); if(p) prog = JSON.parse(p); } catch(e) {}
     if(isDemo) { renderMods(); return; }
+    // Sync from Firebase: merge remote into local, newer n wins
     db.ref(SYNC_KEY).once("value").then(function(snapshot) {
         var d = snapshot.val();
-        if(d && Object.keys(d).length > Object.keys(prog).length) {
-            prog = d;
-            saveProg();
+        if(d) {
+            var merged = false;
+            for(var k in d) {
+                if(!prog[k] || (d[k].n || 0) > (prog[k].n || 0)) {
+                    prog[k] = d[k];
+                    merged = true;
+                }
+            }
+            for(var k in prog) {
+                if(!d[k]) { delete prog[k]; merged = true; }
+            }
+            if(merged) saveProg();
         }
         renderMods();
     }).catch(function(){});
