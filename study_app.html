@@ -184,9 +184,16 @@ try { db = firebase.database(); } catch(e) { showFatal('数据库连接失败: '
 var SYNC_KEY = "progress_v2";
 var R2_BASE = "https://pub-1c1a3bd3f4554dc4afce6c91070cf22e.r2.dev";
 
+var _saveTimer = null;
+var _syncing = false;
 function saveProg() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(prog));
-    if(!isDemo) db.ref(SYNC_KEY).set(prog);
+    if(isDemo) return;
+    if(_saveTimer) clearTimeout(_saveTimer);
+    _saveTimer = setTimeout(function() {
+        _syncing = true;
+        db.ref(SYNC_KEY).set(prog).then(function() { _syncing = false; }).catch(function() { _syncing = false; });
+    }, 300);
 }
 
 function loadProg() {
@@ -219,8 +226,9 @@ function loadProg() {
         }
         renderMods();
     }).catch(function(){});
-    // Listen for realtime changes
+    // Listen for realtime changes (skip our own writes)
     db.ref(SYNC_KEY).on("value", function(snapshot) {
+        if(_syncing) return;
         var d = snapshot.val();
         if(d && JSON.stringify(d) !== JSON.stringify(prog)) {
             prog = d;
