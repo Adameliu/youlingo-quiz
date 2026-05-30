@@ -163,6 +163,29 @@ function showFatal(msg) {
 const STORAGE_KEY = "youlingo_progress_v2";
 
 var curModIdx = -1, curSecIdx = -1;
+var STATE_KEY = "youlingo_state";
+
+function saveState() {
+    var state = {mi:curModIdx, si:curSecIdx, ci:cardIdx};
+    var scr = document.getElementById("scr-study");
+    state.study = scr && !scr.classList.contains("hide");
+    try { localStorage.setItem(STATE_KEY, JSON.stringify(state)); } catch(e){}
+}
+function clearState() { try { localStorage.removeItem(STATE_KEY); } catch(e){} }
+function restoreState() {
+    try {
+        var s = JSON.parse(localStorage.getItem(STATE_KEY));
+        if(!s || !s.study) return;
+        var sec = langData[s.mi]?.sections[s.si];
+        if(!sec) return;
+        // Re-enter study mode at saved position
+        startStudy(s.mi, s.si);
+        if(s.ci > 0 && s.ci < cards.length) {
+            cardIdx = s.ci;
+            showCard();
+        }
+    } catch(e){}
+}
 var cards = [], cardIdx = 0, curCard = null;
 var sessStats = {ok:0, no:0, tot:0};
 var prog = {};
@@ -240,6 +263,7 @@ function loadProg() {
             if(merged) saveProg();
         }
         renderMods();
+        restoreState();
     }).catch(function(){});
     // Listen for realtime changes (skip our own writes)
     var sp=syncPath();sp&&db.ref(sp).on("value", function(snapshot) {
@@ -440,6 +464,7 @@ function checkAns(ua, ca) {
 function startStudy(mi, si) {
     curModIdx = mi;
     curSecIdx = si;
+    saveState();
     var sec = langData[mi].sections[si];
     document.getElementById("scr-sections").classList.add("hide");
     document.getElementById("scr-study").classList.remove("hide");
@@ -484,6 +509,7 @@ function startStudy(mi, si) {
 }
 
 function showCard() {
+    saveState();
     while(cardIdx < cards.length && prog[cards[cardIdx].i] && prog[cards[cardIdx].i].m) cardIdx++;
     if(cardIdx >= cards.length) { showHooray(); return; }
     curCard = cards[cardIdx];
@@ -938,6 +964,7 @@ function showSecs(mi) {
 }
 
 function goHome() {
+    clearState();
     document.getElementById("scr-sections").classList.add("hide");
     document.getElementById("scr-study").classList.add("hide");
     document.getElementById("scr-modules").classList.remove("hide");
