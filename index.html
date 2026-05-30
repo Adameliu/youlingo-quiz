@@ -210,6 +210,19 @@ function loadProg() {
     } catch(e){}
     try { var p = localStorage.getItem(STORAGE_KEY); if(p) prog = JSON.parse(p); } catch(e) {}
     if(isDemo) { renderMods(); return; }
+    // Migrate old progress_v2 to uid path
+    if(_uid) {
+        db.ref("progress_v2").once("value").then(function(snap) {
+            var old = snap.val();
+            if(old) {
+                var m = false;
+                for(var k in old) {
+                    if(!prog[k]||(old[k].n||0)>(prog[k].n||0)){prog[k]=old[k];m=true;}
+                }
+                if(m) { saveProg(); db.ref("progress_v2").remove(); }
+            }
+        }).catch(function(){});
+    }
     // Sync from Firebase: merge remote into local, newer n wins
     var sp=syncPath();sp&&db.ref(sp).once("value").then(function(snapshot) {
         var d = snapshot.val();
