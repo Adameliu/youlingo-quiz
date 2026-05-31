@@ -175,16 +175,18 @@ function clearState() { try { localStorage.removeItem(STATE_KEY); } catch(e){} }
 function restoreState() {
     try {
         var s = JSON.parse(localStorage.getItem(STATE_KEY));
-        if(!s || !s.study) return;
-        var sec = langData[s.mi]?.sections[s.si];
-        if(!sec) return;
+        if(!s || !s.study || !langData || !langData[s.mi]) {
+            clearState(); return;
+        }
+        var sec = langData[s.mi].sections[s.si];
+        if(!sec) { clearState(); return; }
         // Re-enter study mode at saved position
         startStudy(s.mi, s.si);
         if(s.ci > 0 && s.ci < cards.length) {
             cardIdx = s.ci;
             showCard();
         }
-    } catch(e){}
+    } catch(e){ clearState(); }
 }
 var cards = [], cardIdx = 0, curCard = null;
 var sessStats = {ok:0, no:0, tot:0};
@@ -462,6 +464,7 @@ function checkAns(ua, ca) {
 
 // ===== Study =====
 function startStudy(mi, si) {
+    if(!langData || !langData[mi] || !langData[mi].sections[si]) return;
     curModIdx = mi;
     curSecIdx = si;
     saveState();
